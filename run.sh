@@ -13,7 +13,7 @@ KERNEL=./kernel
 
 CFLAGS="-std=c11 -O2 -g3 -Wall -Wextra --target=riscv32 -ffreestanding -nostdlib"
 
-# ./buildがない場合は作成
+# $BUILDがない場合は作成
 if [ ! -e $BUILD ]; then
     mkdir $BUILD
 fi
@@ -24,7 +24,7 @@ if [ ! -e $LINKER/kernel.map ]; then
 fi
 
 # カーネルのビルド
-$CC $CFLAGS -Wl,-T$LINKER/kernel.ld -Wl,-Map=$LINKER/kernel.map -o $BUILD/kernel.elf $KERNEL/kernel.c
+$CC $CFLAGS -Wl,-T$LINKER/kernel.ld -Wl,-Map=$LINKER/kernel.map -o $BUILD/kernel.elf $KERNEL/kernel.c $KERNEL/common.c
 
 # QEMUの起動
 qemu-system-riscv32 -machine virt -bios default -nographic -serial mon:stdio -kernel $BUILD/kernel.elf
