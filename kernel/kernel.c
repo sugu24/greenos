@@ -50,6 +50,9 @@ void kernel_main(void) {
     printf("%s\n", s2);
     printf("%d\n", strcmp(s2, s3));
 
+    PANIC("booted!");
+
+    printf("inter loop\n");
     for (;;) {
         __asm__ __volatile__("wfi");
     }
