@@ -4,6 +4,7 @@
 *.tar
 *.o
 *.elf
+*.elf.*
 *.bin
 *.log
 *.pcap
