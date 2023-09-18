@@ -1,6 +1,3 @@
-#ifndef __HANDLER_H__
-#define __HANDLER_H__
+#pragma once
 
 void riscv32_trap_handler(void);
-
-#endif

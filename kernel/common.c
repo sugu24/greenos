@@ -1,4 +1,4 @@
-#include "common.h"
+#include <kernel/common.h>
 
 void putchar(char ch);
 

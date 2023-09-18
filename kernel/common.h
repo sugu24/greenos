@@ -1,7 +1,6 @@
-#ifndef __COMMON_H__
-#define __COMMON_H__
+#pragma once
 
-#include "type.h"
+#include <kernel/type.h>
 
 #define align_up(value, align)   __builtin_align_up(value, align)
 #define is_aligned(value, align) __builtin_is_aligned(value, align)
@@ -18,5 +17,3 @@ char *strcpy(char *dst, const char *src);
 char *strcpy_n(char *dst, const char *src, size_t n);
 int   strcmp(const char *s1, const char *s2);
 void  printf(const char *fmt, ...);
-
-#endif

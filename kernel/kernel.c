@@ -1,29 +1,11 @@
 #include "kernel.h"
 #include "common.h"
-#include "type.h"
+#include <kernel/type.h>
+#include <kernel/memory.h>
+#include <riscv32/handler.h>
+#include <riscv32/asm.h>
 
-/* リンカで__bss, __bss_end, __stack_topのアドレスが指定されている*/
-extern char __bss[], __bss_end[], __stack_top[];
-
-struct sbiret sbi_call(long arg0, long arg1, long arg2, long arg3, 
-                       long arg4, long arg5, long fid,  long eid) {
-    register long a0 __asm__("a0") = arg0;
-    register long a1 __asm__("a1") = arg1;
-    register long a2 __asm__("a2") = arg2;
-    register long a3 __asm__("a3") = arg3;
-    register long a4 __asm__("a4") = arg4;
-    register long a5 __asm__("a5") = arg5;
-    register long a6 __asm__("a6") = fid;
-    register long a7 __asm__("a7") = eid;
-
-    __asm__ __volatile__("ecall"
-                         : "=r"(a0), "=r"(a1)
-                         : "r"(a0), "r"(a1), "r"(a2), "r"(a3), "r"(a4), "r"(a5),
-                           "r"(a6), "r"(a7)
-                         : "memory");
-    
-    return (struct sbiret) { .error = a0, .value = a1 };
-}
+extern void riscv32_setup();
 
 void putchar(char c) {
     // a0:c, a6:FID, a7:EID (sbi_console_putchar: a6:0, a7:1)
@@ -31,8 +13,14 @@ void putchar(char c) {
 }
 
 void kernel_main(void) {
+    /* CPUのセットアップ */
+    riscv32_setup();
+
     /* .bss領域を0クリアしておく */
     memset(__bss, 0, (size_t) __bss_end - (size_t) __bss);
+
+    // memoryの初期化
+    memory_init();
 
     printf("\n\nfrom sbi: %s %s %s\n", "Hello", "World", "!");
     printf("1 + 2 = %d, %x\n", 1 + 2, 0x1234abcd);
@@ -49,12 +37,33 @@ void kernel_main(void) {
     strcpy_n(s2, s1, sizeof(s1));
     printf("%s\n", s2);
     printf("%d\n", strcmp(s2, s3));
+    
+    // __asm__ __volatile__("unimp"); // illegal instruction
 
-    PANIC("booted!");
+    paddr_t paddr1 = pm_alloc(4 * 1024 + 1, 1);
+    paddr_t paddr2 = pm_alloc(1000, 1);
+    printf("paddr1 = %x\n", paddr1);
+    printf("paddr2 = %x\n", paddr2);
+    pm_free(paddr1);
+    paddr1 = pm_alloc(8 * 1024 + 1, 1);
+    printf("paddr1 = %x\n", paddr1);
+    printf("paddr2 = %x\n", paddr2);
+    struct page *page1 = find_page_by_paddr(paddr1);
+    struct page *page2 = find_page_by_paddr(paddr2);
+    printf("page1 = %x\n", page1);
+    printf("page1->base = %x\n", page1->base);
+    printf("page1->next = %x\n", page1->next);
+    printf("page1->next->base = %x\n", page1->next->base);
+    printf("page1->next->next = %x\n", page1->next->next);
+    printf("page1->next->next->base = %x\n", page1->next->next->base);
+    printf("page1->next->next->next = %x\n", page1->next->next->next);
+    printf("page2 = %x\n", page2);
+    printf("page2->base = %x\n", page2->base);
+    printf("page2->next = %x\n", page2->next);
 
     printf("inter loop\n");
     for (;;) {
-        __asm__ __volatile__("wfi");
+        asm_wfi();
     }
 }
 
