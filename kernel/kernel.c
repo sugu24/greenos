@@ -2,6 +2,8 @@
 #include "common.h"
 #include <kernel/type.h>
 #include <kernel/memory.h>
+#include <kernel/proc.h>
+#include <kernel/thread.h>
 #include <riscv32/handler.h>
 #include <riscv32/asm.h>
 
@@ -12,6 +14,20 @@ void putchar(char c) {
     sbi_call(c, 0, 0, 0, 0, 0, 0, 1);
 }
 
+void fb() {
+    for (int i = 0; i < 10; i++) {
+        printf("%d", i);
+        thread_switch();
+    }
+}
+
+void fa(char *c) {
+    for (int i = 0; i < 10; i++) {
+        printf("%s", c);
+        thread_switch();
+    }
+}
+
 void kernel_main(void) {
     /* CPUのセットアップ */
     riscv32_setup();
@@ -19,8 +35,11 @@ void kernel_main(void) {
     /* .bss領域を0クリアしておく */
     memset(__bss, 0, (size_t) __bss_end - (size_t) __bss);
 
-    // memoryの初期化
+    // メモリ機構の初期化
     memory_init();
+
+    // プロセス機構の初期化
+    init_process_manager();
 
     printf("\n\nfrom sbi: %s %s %s\n", "Hello", "World", "!");
     printf("1 + 2 = %d, %x\n", 1 + 2, 0x1234abcd);
@@ -37,8 +56,6 @@ void kernel_main(void) {
     strcpy_n(s2, s1, sizeof(s1));
     printf("%s\n", s2);
     printf("%d\n", strcmp(s2, s3));
-    
-    // __asm__ __volatile__("unimp"); // illegal instruction
 
     paddr_t paddr1 = pm_alloc(4 * 1024 + 1, 1);
     paddr_t paddr2 = pm_alloc(1000, 1);
@@ -61,10 +78,14 @@ void kernel_main(void) {
     printf("page2->base = %x\n", page2->base);
     printf("page2->next = %x\n", page2->next);
 
-    printf("inter loop\n");
-    for (;;) {
-        asm_wfi();
-    }
+    // __asm__ __volatile__("unimp"); // illegal instruction
+    process_t fa_pid = create_process(fa, "A");
+    process_t fb_pid = create_process(fb, NULL);
+    printf("fa_pid=%d, fb_pid=%d\n", fa_pid, fb_pid);
+    create_thread(fa_pid, fa, "B");
+
+    // アイドルスレッドの実行
+    idle_thread_process();
 }
 
 /* .text.boot = 0x80200000 */

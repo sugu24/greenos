@@ -8,6 +8,10 @@
 .align 4 // パフォーマンスのため？
 .global riscv32_trap_handler
 riscv32_trap_handler:
+    // 一旦、簡易的に実装する
+    // カーネルスタックにする（元がカーネルスタックならこの命令に意味はない）
+    csrrw sp, sscratch, sp
+
     // S-modeで実行されているため、U-modeからこの関数に
     // ジャンプしてきた場合は、カーネルスタックで保存しなければいけない
     csrr a0, sstatus      // 割り込み発生時の動作モードがsstatusの一部にある
@@ -18,6 +22,7 @@ riscv32_trap_handler:
     // ユーザからアクセスできないカーネルスタックをa0に設定する
     // lw a0, CPUVAR_SP_TOP(tp) // a0レジスタに実行中タスクのカーネルスタックを設定
     // j 2f
+    
 1:
     mv a0, sp
 2:
@@ -25,7 +30,7 @@ riscv32_trap_handler:
     // 後で復元できるようにする。
     // 各レジスタの保存先はriscv32_trap_frame構造体に従う。
 
-    addi a0, a0, -(33 * 4)
+    addi a0, a0, -(35 * 4)
     // SCR(Control and Status Register)以外を保存する
     sw ra,  4 * 4(a0)
     sw sp,  4 * 5(a0)
@@ -61,6 +66,15 @@ riscv32_trap_handler:
     // spを退避させたのでspにスタックポインタをセットする
     mv sp, a0
 
+    // sw sp, 4 * 5(a0) の sp はカーネルスタックなので
+    // csrrw sp, sscratch, sp を行う前の sp を 4 * 5(a0) に保存する
+    csrrw a0, sscratch, sp
+    sw a0, 4 * 5(sp)
+
+    // 4 * 27(sp) が指す a0 を復元して、格納する
+    // lw a0, CPUVAR_SSCRATCH(tp)
+    // sw a0, 4 * 13(sp)
+
     // 割り込み・例外発生時のscrを退避させる
     csrr a0, sepc
     sw a0, 4 * 0(sp)
@@ -71,8 +85,10 @@ riscv32_trap_handler:
     csrr a0, stval
     sw a0, 4 * 3(sp)
 
+    // 例外発生時
+
     // 割り込み・例外発生時の処理の続きをriscv32_handle_trapで行う
-    // 引数はa0に渡す(riscvの関数の引数はa0~)。
+    // 引数はa0に渡す(riscvの関数の引数はa0)。
     mv a0, sp
     call riscv32_handle_trap
 

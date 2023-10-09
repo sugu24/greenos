@@ -74,6 +74,18 @@ void pm_free(paddr_t paddr) {
     }
 }
 
+// 連結リストで表されたページを一括で解放する
+void list_pm_free(struct page *pages) {
+    struct page *page = pages;
+    struct page *buff;
+
+    while (page) {
+        buff = page->next;
+        pm_free(page->base);
+        page = buff;
+    }
+}
+
 // __free_ram ~ __free_ram_end までの動的に扱えるメモリを
 // ページング方式：Sv32 で扱えるように抽象化することを行う
 // メモリ管理システムの初期化を行う
@@ -88,6 +100,11 @@ void memory_init() {
 
     // 実際のpageの始まるアドレスを計算
     start_page_addr = ALIGN_UP((paddr_t)(__free_ram + sizeof(struct page) * whole_num_page), PAGE_SIZE);
+    printf("whole_num_page = %x %d\n", whole_num_page, whole_num_page);
+    printf("start_page_addr = %x\n", start_page_addr);
+    printf("ram_end = %x\n", __free_ram_end);
+    printf("ram_size = %x\n", __free_ram_end - start_page_addr);
+    printf("ram_size = %x\n", (uint32_t)(__free_ram_end - start_page_addr) >> 12);
     
     // page[0~num_page]を初期化する
     for (int i = 0; i < whole_num_page; i++) {

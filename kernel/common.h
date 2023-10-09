@@ -11,6 +11,12 @@
 #define va_end   __builtin_va_end
 #define va_arg   __builtin_va_arg
 
+#define PANIC(fmt, ...) \
+    do { \
+        printf("PANIC: %s:%d:" fmt "\n", __FILE__, __LINE__, ##__VA_ARGS__); \
+        while (1) {} \
+    } while (0)
+
 void *memset(void *buf, char c, size_t n);
 void *memcpy(void *dst, const void *src, size_t n);
 char *strcpy(char *dst, const char *src);

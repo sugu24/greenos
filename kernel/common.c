@@ -70,11 +70,11 @@ void printf(const char *fmt, ...) {
                         value = -value;
                     }
 
-                    int digit;
-                    for (digit = 1; value / digit > 9; digit *= 10);
+                    int digit = 1;
+                    for (; value / digit > 9; digit *= 10);
 
                     for (; digit > 0; digit /= 10)
-                        putchar('0' + value / digit);
+                        putchar('0' + (value / digit) % 10);
                     
                     break;
                 }

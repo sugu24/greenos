@@ -30,11 +30,14 @@ void riscv32_handle_trap(struct riscv32_trap_frame *frame) {
             PANIC("SCAUSE_STORE_AMO_ACCESS_FAULT");
         // システムコール
         case SCAUSE_ENVIRONMENT_CALL:
+            PANIC("SCAUSE_ENVIRONMENT_CALL");
         // ページフォルト
         case SCAUSE_INSTRUCTION_PAGE_FAULT:
+            PANIC("SCAUSE_INSTRUCTION_PAGE_FAULT");
         case SCAUSE_LOAD_PAGE_FAULT:
+            PANIC("SCAUSE_LOAD_PAGE_FAULT");
         case SCAUSE_STORE_AMO_PAGE_FAULT:
-
+            PANIC("SCAUSE_STORE_AMO_PAGE_FAULT");
         case SCAUSE_USER_SOFTWARE_INTERRUPT:
             PANIC("SCAUSE_USER_SOFTWARE_INTERRUPT");
         // ソフトウェア割り込み
