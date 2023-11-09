@@ -52,6 +52,8 @@ struct thread {
     high   sp_top  -> |--------------|
 */
 
+extern struct thread *runnable_threads;
+
 void init_thread_manager(void);
 
 thread_t create_thread(process_t pid, void *entry_addr, void *arg);

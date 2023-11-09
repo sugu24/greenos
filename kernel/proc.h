@@ -31,6 +31,6 @@ extern struct process processes[MAX_NUM_PROCESS];
 process_t create_process(void *entry_addr, void *arg);
 struct process *get_process_by_pid(process_t pid);
 thread_t find_thread_id_by_pid(process_t pid);
-errno_t delete_process(process_t pid);
+error_t delete_process(process_t pid);
 
 void init_process_manager(void);

@@ -6,13 +6,9 @@
 #include <kernel/thread.h>
 #include <riscv32/handler.h>
 #include <riscv32/asm.h>
+#include <riscv32/vm.h>
 
 extern void riscv32_setup();
-
-void putchar(char c) {
-    // a0:c, a6:FID, a7:EID (sbi_console_putchar: a6:0, a7:1)
-    sbi_call(c, 0, 0, 0, 0, 0, 0, 1);
-}
 
 void fb() {
     for (int i = 0; i < 10; i++) {
@@ -41,14 +37,17 @@ void kernel_main(void) {
     // プロセス機構の初期化
     init_process_manager();
 
+    // ページング機構の初期化
+    riscv32_vm_init();
+
     printf("\n\nfrom sbi: %s %s %s\n", "Hello", "World", "!");
     printf("1 + 2 = %d, %x\n", 1 + 2, 0x1234abcd);
 
     char s1[5] = "abcd";
     char s2[5];
     char s3[5] = "efgh";
-    int n1[5] = { 1, 2, 3, 4, 5 };
-    int n2[5] = { 4, 4, 5, 5, 5 };
+    uint32_t n1[5] = { 1, 2, 3, 4, 5 };
+    uint32_t n2[5] = { 4, 4, 5, 5, 5 };
     memset(n2, 0, sizeof(n2));
     printf("%d %d %d %d %d\n", n2[0], n2[1], n2[2], n2[3], n2[4]);
     memcpy(n2, n1, sizeof(n1));

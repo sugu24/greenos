@@ -1,6 +1,6 @@
 #include <kernel/common.h>
 
-void putchar(char ch);
+#include <sbi/sbi.h>
 
 void *memset(void *buf, char c, size_t n) {
     uint8_t *p = (uint8_t *) buf;

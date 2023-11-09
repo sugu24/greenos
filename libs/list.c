@@ -11,12 +11,12 @@ void two_way_list_push_back(struct two_way_list **list, struct two_way_list *ele
         (*list)->prev->next = ele;
         ele->prev = (*list)->prev;
         (*list)->prev = ele;
-        ele->next = (*list);
+        ele->next = *list;
     } else {
         // listが空の場合
         ele->next = ele;
         ele->prev = ele;
-        (*list) = ele;
+        *list = ele;
     }
 }
 

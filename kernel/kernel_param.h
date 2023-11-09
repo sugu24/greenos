@@ -11,3 +11,6 @@
 
 // スレッドが持つカーネル空間のメモリ（スタック）のサイズ
 #define THREAD_KERNEL_STACK_SIZE (4 * PAGE_SIZE)
+
+// メモリサイズ
+#define RAM_SIZE (128 * 1024 * 1024)

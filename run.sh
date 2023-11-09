@@ -11,7 +11,7 @@ KERNEL=./kernel
 RISCV32=./riscv32
 
 # .c,.h,.Sファイルの格納場所
-SRCS_DIRS=("./kernel" "./libs" "./riscv32")
+SRCS_DIRS=("./kernel" "./sbi" "./libs" "./riscv32")
 
 # ./OBJ/SRCS_DIRがない場合は作成
 for SRCS_DIR in ${SRCS_DIRS[@]}; do
@@ -34,4 +34,4 @@ fi
 make
 
 # QEMUの起動
-qemu-system-riscv32 -machine virt -bios default -nographic -serial mon:stdio -kernel $BUILD/kernel.elf
+qemu-system-riscv32 -m 128 -machine virt -bios default -nographic -serial mon:stdio -kernel $BUILD/kernel.elf

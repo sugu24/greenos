@@ -6,7 +6,7 @@ typedef unsigned int uint32_t;
 typedef uint32_t size_t;
 typedef unsigned long long uint64_t;
 typedef uint32_t size_t;
-typedef uint32_t errno_t;
+typedef uint32_t error_t;
 typedef uint32_t paddr_t;
 typedef uint32_t vaddr_t;
 typedef uint32_t process_t;
@@ -15,9 +15,6 @@ typedef uint32_t thread_t;
 #define true  1
 #define false 0
 #define NULL ((void *)0)
-
-#define OK     1
-#define ERROR  0
 
 // alignment処理に関するdefine
 // https://clang.llvm.org/docs/LanguageExtensions.html
@@ -34,3 +31,13 @@ typedef uint32_t thread_t;
 // https://www.ibm.com/docs/ja/xl-c-aix/13.1.0?topic=functions-sync-bool-compare-swap
 #define compare_and_swap(ptr, compVal, exchVal)                                        \
     __sync_bool_compare_and_swap(ptr, compVal, exchVal)
+
+
+/*
+    エラーコード
+*/
+#define OK     1
+#define ERROR  0
+#define ERR_ALREADY_EXISTS -1 // 既に存在する場合
+#define ERR_NOT_FOUND      -2 // 見つけられなかった場合
+#define ERR_NO_MEMORY      -3 // 割り当てるメモリがなかった場合

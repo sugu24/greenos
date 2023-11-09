@@ -1,7 +1,9 @@
 #include <kernel/type.h>
+#include <kernel/proc.h>
 #include <riscv32/asm.h>
 #include <riscv32/lock.h>
 #include <riscv32/switch.h>
+#include <riscv32/vm.h>
 
 // アイドルスレッドのメイン処理
 // 割り込みが発生するまでCPUを休ませる
@@ -24,19 +26,6 @@ void arch_idle(void) {
 
 // スレッドをスイッチする準備を行う
 void arch_thread_switch(struct thread *current, struct thread *next) {
-    // ページテーブルを入れ替える
-    // satpが示すページテーブルを変更したなら、
-    // satpの書き換え前にsfence.vmaを実行する必要があるかもしれない。
-    // 引用：https://riscv.org/wp-content/uploads/2017/05/riscv-privileged-v1.10.pdf p. 58
-    asm_sfence_vma();
-    // write_satp();
-
-    // sfence.vmaより前の命令は、sfence.vma以降の
-    // satpの参照前に順序付けされることが保証される。
-    // なので、念のためsatpの書き換えの順序を入れ替えられないように
-    // sfence.vmaを実行する。
-    asm_sfence_vma();
-
     /* 
         // 割り込みハンドラで使うカーネルスタックを切り替える。
         // システムコールハンドラ内で入力待ち等でスリープ状態に
@@ -49,6 +38,22 @@ void arch_thread_switch(struct thread *current, struct thread *next) {
         "csrw sscratch, %[sscratch]\n"
         :: [sscratch] "r" ((uint32_t) &next->kernel_stack_info.sp)
     );
+
+    // スレッドnextのプロセスを得る
+    struct process *next_proc = get_process_by_pid(next->pid);
+    
+    // ページテーブルを入れ替える
+    // satpが示すページテーブルを変更したなら、
+    // satpの書き換え前にsfence.vmaを実行する必要があるかもしれない。
+    // 引用：https://riscv.org/wp-content/uploads/2017/05/riscv-privileged-v1.10.pdf p. 58
+    asm_sfence_vma();
+    write_satp(SATP_MODE_SV32 | next_proc->vm_root_table >> SATP_PPN_SHIFT);
+
+    // sfence.vmaより前の命令は、sfence.vma以降の
+    // satpの参照前に順序付けされることが保証される。
+    // なので、念のためsatpの書き換えの順序を入れ替えられないように
+    // sfence.vmaを実行する。
+    asm_sfence_vma();
 
     // コンテキストスイッチを行う。
     // コンテキストスイッチを行ったスレッドは、

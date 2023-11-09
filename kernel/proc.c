@@ -2,18 +2,16 @@
 #include <kernel/thread.h>
 #include <kernel/type.h>
 #include <kernel/kernel_param.h>
+#include <kernel/memory.h>
+
+#include <riscv32/vm.h>
+
 #include <libs/list.h>
 
 struct process processes[MAX_NUM_PROCESS];
 
 // プロセスの構造体の初期化
-static errno_t init_process_struct(struct process *process, 
-                            paddr_t vm_root_table) {
-    // ベースルートテーブルを表すページ構造体を取得する
-    struct page *page = find_page_by_paddr(vm_root_table);
-    
-    process->vm_root_table = vm_root_table;
-    process->pages = page;
+static error_t init_process_struct(struct process *process) {
     process->state = PROCESS_USED;
     // スレッドの初期化によって次にprocess->threads[tid]を初期化する
     process->kernel_objects = NULL;
@@ -21,6 +19,15 @@ static errno_t init_process_struct(struct process *process,
     process->two_way_list.next = NULL;
     process->two_way_list.prev = NULL;
 
+    // ページングの初期化を行う
+    error_t err = arch_vm_init(&process->vm_root_table);
+    if (err != OK)
+        return err;
+    
+    // ベースルートテーブルを表すページ構造体を取得する
+    struct page *page = find_page_by_paddr(process->vm_root_table);
+    process->pages = page;
+    
     // 仮想アドレス変換ルートテーブルをマップしたため、
     // ref_count を加算する
     if (page) page->ref_count++;
@@ -63,30 +70,25 @@ process_t create_process(void *entry_addr, void *arg) {
     process_t pid = find_process_id();
     if ((int)pid == ERROR)
         PANIC("find_process_id() failure");
-
+    
     // プロセスの構造体を得る
     struct process *proc = get_process_by_pid(pid);
     if (!proc)
         PANIC("get_process_by_pid() failure");
 
-    // ルートページテーブルトなるメモリを確保する
-    paddr_t vm_root_table = pm_alloc(PAGE_SIZE, 1);
-    if (!vm_root_table)
-        PANIC("error create_process(): failure pm_alloc()");
-
     // プロセスの構造体を初期化する
-    errno_t err = init_process_struct(proc, vm_root_table);
+    error_t err = init_process_struct(proc);
     if (err != OK)
-        PANIC("init_process_struct() failure.");
-
+        PANIC("error %d create_process(): init_process_struct() failure.", err);
+    
     // スレッドを生成する
-    thread_t tid = create_thread(pid, entry_addr, arg);
-
+    create_thread(pid, entry_addr, arg);
+    
     return pid;
 }
 
 // プロセスを削除する
-errno_t delete_process(process_t pid) {
+error_t delete_process(process_t pid) {
     // 対称のプロセスを設定する
     struct process *proc = get_process_by_pid(pid);
     if (!proc)
@@ -117,6 +119,10 @@ errno_t delete_process(process_t pid) {
 
 // プロセスを管理する機構の初期化
 void init_process_manager() {
+    printf("init_process_manager() start ...\n");
+
     memset(processes, 0, sizeof(struct process) * MAX_NUM_PROCESS);
     init_thread_manager();
+
+    printf("init_process_manager() end ...\n\n");
 }

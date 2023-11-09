@@ -30,9 +30,9 @@ paddr_t pm_alloc(size_t size, uint8_t flag) {
     struct page *head_free_page = NULL;
     struct page *free_page;
     for (int i = 0; i < whole_num_page && num_page > 0; i++) {
-        // 使用中のページを対象にcontinue
+        // 使用中のページを対象にcontinueする
         if (pages[i].ref_count > 0) continue;
-
+        
         num_page--;
 
         // 割り当てる先頭のページを管理する構造体pageを保存する
@@ -92,8 +92,9 @@ void list_pm_free(struct page *pages) {
 // __free_ram ~ __free_ram_end を ページとページを管理する構造体を記憶する
 // ための領域として初期化する
 void memory_init() {
+    printf("memory_init() start ...\n");
     // 自由に使えるram領域のサイズを計算
-    size_t free_ram_size = (size_t)__free_ram_end - (size_t)__free_ram;
+    size_t free_ram_size = (size_t)(__free_ram_end - __free_ram);
 
     // 実際に扱えるページ数を計算
     whole_num_page = free_ram_size / (PAGE_SIZE + sizeof(struct page));
@@ -104,7 +105,6 @@ void memory_init() {
     printf("start_page_addr = %x\n", start_page_addr);
     printf("ram_end = %x\n", __free_ram_end);
     printf("ram_size = %x\n", __free_ram_end - start_page_addr);
-    printf("ram_size = %x\n", (uint32_t)(__free_ram_end - start_page_addr) >> 12);
     
     // page[0~num_page]を初期化する
     for (int i = 0; i < whole_num_page; i++) {
@@ -114,4 +114,6 @@ void memory_init() {
         pages[i].ref_count = 0;
         pages[i].base = start_page_addr + PAGE_SIZE * i;
     }
+
+    printf("memory_init() end ...\n\n");
 }

@@ -16,7 +16,7 @@
 
 // 実行可能スレッドの連結リスト
 // 先頭のスレッドを実行中とする
-static struct thread *runnable_threads;
+struct thread *runnable_threads;
 
 // アイドルスレッド
 static struct thread IDLE_THREAD;
@@ -123,7 +123,7 @@ thread_t create_thread(process_t pid, void *entry_addr, void *arg) {
         // スレッド構造体を得る
         thread = get_thread_by_pid(pid, tid);
     }
-
+    
     // カーネルスタックを確保する
     // このカーネルスタックはスレッド毎に
     // 管理するリソースを記憶するために用いる
@@ -132,11 +132,11 @@ thread_t create_thread(process_t pid, void *entry_addr, void *arg) {
 
     // スレッド構造体を初期化する
     init_thread_struct(thread, pid, sp_bottom, entry_addr, arg);
-
+    
     // 初めに持つスレッドを RUNNABLE にする
     if (pid > 0 && pid <= MAX_NUM_PROCESS) 
         thread_runnable(pid, tid);
-
+    
     return tid;
 }
 
